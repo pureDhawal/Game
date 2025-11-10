@@ -39,21 +39,21 @@
  *                                   COLOR CODES
  **************************************************************************************/
 #define CLEAR "\033[2J"
-#define HOME  "\033[H"
+#define HOME "\033[H"
 #define RESET "\033[0m"
-#define RED   "\033[31m"
+#define RED "\033[31m"
 #define GREEN "\033[32m"
 #define YELLOW "\033[33m"
-#define BLUE  "\033[34m"
+#define BLUE "\033[34m"
 #define MAGENTA "\033[35m"
-#define CYAN  "\033[36m"
+#define CYAN "\033[36m"
 
 /**************************************************************************************
  *                               GLOBAL VARIABLES
  **************************************************************************************/
-char board[3][3];          // Game board (3x3)
-char currentPlayer = 'X';  // Current player ('X' or 'O')
-int mode = 1;              // Game mode: 1 = PvP, 2 = PvC
+char board[3][3];         // Game board (3x3)
+char currentPlayer = 'X'; // Current player ('X' or 'O')
+int mode = 1;             // Game mode: 1 = PvP, 2 = PvC
 
 /**************************************************************************************
  *                         ENABLE ANSI COLORS ON WINDOWS
@@ -83,43 +83,65 @@ void enableANSI()
  *          0  = user requested quit (typed 'Q' / 'q')
  *         -1  = invalid input (not int or out of range)
  **************************************************************************************/
-void flushInput() { int c; while ((c = getchar()) != '\n' && c != EOF) ; }
-
-static void trim_newline(char *s) {
-    size_t n = strlen(s);
-    if (n && s[n-1] == '\n') s[n-1] = '\0';
+void flushInput()
+{
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
 }
 
-static bool read_line(char *buf, size_t sz) {
-    if (!fgets(buf, (int)sz, stdin)) return false;
+static void trim_newline(char *s)
+{
+    size_t n = strlen(s);
+    if (n && s[n - 1] == '\n')
+        s[n - 1] = '\0';
+}
+
+static bool read_line(char *buf, size_t sz)
+{
+    if (!fgets(buf, (int)sz, stdin))
+        return false;
     trim_newline(buf);
     return true;
 }
 
-static bool is_quit(const char *s) {
+static bool is_quit(const char *s)
+{
     // Treat leading whitespace as ignorable; first non-space 'q' or 'Q' triggers quit
-    while (*s==' '||*s=='\t') s++;
-    return (*s=='q'||*s=='Q');
+    while (*s == ' ' || *s == '\t')
+        s++;
+    return (*s == 'q' || *s == 'Q');
 }
 
-static bool parse_int(const char *s, int *out) {
-    char *end=NULL; long v=strtol(s,&end,10);
-    if (s==end) return false;               // no digits found
-    while (*end==' '||*end=='\t') end++;
-    if (*end!='\0') return false;           // trailing junk => invalid
-    *out=(int)v; return true;
+static bool parse_int(const char *s, int *out)
+{
+    char *end = NULL;
+    long v = strtol(s, &end, 10);
+    if (s == end)
+        return false; // no digits found
+    while (*end == ' ' || *end == '\t')
+        end++;
+    if (*end != '\0')
+        return false; // trailing junk => invalid
+    *out = (int)v;
+    return true;
 }
 
 /* Prompt for an int in [min,max]; allow 'Q' to quit.
    Returns: 1 success, 0 user quit, -1 invalid input */
-static int prompt_int_or_quit(const char *prompt, int *out, int min, int max) {
+static int prompt_int_or_quit(const char *prompt, int *out, int min, int max)
+{
     char buf[64];
     printf("%s", prompt);
-    if (!read_line(buf, sizeof(buf))) return -1;
-    if (is_quit(buf)) return 0;             // <<< Quit-anywhere detection here
+    if (!read_line(buf, sizeof(buf)))
+        return -1;
+    if (is_quit(buf))
+        return 0; // <<< Quit-anywhere detection here
     int val;
-    if (!parse_int(buf, &val)) return -1;
-    if (val < min || val > max) return -1;
+    if (!parse_int(buf, &val))
+        return -1;
+    if (val < min || val > max)
+        return -1;
     *out = val;
     return 1;
 }
@@ -132,14 +154,17 @@ void playInputSound()
 #ifdef _WIN32
     Beep(750, 120);
 #else
-    printf("\a"); fflush(stdout);
+    printf("\a");
+    fflush(stdout);
 #endif
 }
 
 void playWinSound()
 {
 #ifdef _WIN32
-    Beep(1000, 150); Beep(1200, 150); Beep(1500, 200);
+    Beep(1000, 150);
+    Beep(1200, 150);
+    Beep(1500, 200);
 #elif APPLE
     system("afplay /System/Library/Sounds/Tink.aiff 2>/dev/null &");
 #else
@@ -150,11 +175,13 @@ void playWinSound()
 void playDrawSound()
 {
 #ifdef _WIN32
-    Beep(700, 200); Beep(700, 200);
+    Beep(700, 200);
+    Beep(700, 200);
 #elif APPLE
     system("afplay /System/Library/Sounds/Pop.aiff 2>/dev/null &");
 #else
-    printf("\a"); fflush(stdout);
+    printf("\a");
+    fflush(stdout);
 #endif
 }
 
@@ -183,8 +210,10 @@ void centerText(const char *text)
     int width = getTerminalWidth();
     int len = (int)strlen(text);
     int spaces = (width - len) / 2;
-    if (spaces < 0) spaces = 0;
-    for (int i = 0; i < spaces; i++) printf(" ");
+    if (spaces < 0)
+        spaces = 0;
+    for (int i = 0; i < spaces; i++)
+        printf(" ");
     printf("%s\n", text);
 }
 
@@ -222,25 +251,32 @@ void printBoard()
 
     int width = getTerminalWidth();
     int indent = (width - 25) / 2;
-    if (indent < 0) indent = 0;
+    if (indent < 0)
+        indent = 0;
 
     for (int i = 0; i < 3; i++)
     {
-        for (int s = 0; s < indent; s++) printf(" ");
+        for (int s = 0; s < indent; s++)
+            printf(" ");
 
         for (int j = 0; j < 3; j++)
         {
             char mark = board[i][j];
-            if (mark == 'X') printf(YELLOW " %c " RESET, mark);
-            else if (mark == 'O') printf(RED " %c " RESET, mark);
-            else printf(" %c ", mark);
+            if (mark == 'X')
+                printf(YELLOW " %c " RESET, mark);
+            else if (mark == 'O')
+                printf(RED " %c " RESET, mark);
+            else
+                printf(" %c ", mark);
 
-            if (j < 2) printf(CYAN "|" RESET);
+            if (j < 2)
+                printf(CYAN "|" RESET);
         }
         printf("\n");
         if (i < 2)
         {
-            for (int s = 0; s < indent; s++) printf(" ");
+            for (int s = 0; s < indent; s++)
+                printf(" ");
             printf(CYAN "---+---+---" RESET "\n");
         }
     }
@@ -257,8 +293,10 @@ bool checkWin()
         if (board[0][i] == board[1][i] && board[1][i] == board[2][i])
             return true;
 
-    if (board[0][0] == board[1][1] && board[1][1] == board[2][2]) return true;
-    if (board[0][2] == board[1][1] && board[1][1] == board[2][0]) return true;
+    if (board[0][0] == board[1][1] && board[1][1] == board[2][2])
+        return true;
+    if (board[0][2] == board[1][1] && board[1][1] == board[2][0])
+        return true;
 
     return false;
 }
@@ -274,12 +312,14 @@ bool isDraw()
 
 bool makeMove(int block)
 {
-    if (block < 1 || block > 9) return false;
+    if (block < 1 || block > 9)
+        return false;
 
     int row = (block - 1) / 3;
-    int col  = (block - 1) % 3;
+    int col = (block - 1) % 3;
 
-    if (board[row][col] == 'X' || board[row][col] == 'O') return false;
+    if (board[row][col] == 'X' || board[row][col] == 'O')
+        return false;
 
     board[row][col] = currentPlayer;
     return true;
@@ -288,7 +328,10 @@ bool makeMove(int block)
 void computerMove()
 {
     int block;
-    do { block = rand() % 9 + 1; } while (!makeMove(block));
+    do
+    {
+        block = rand() % 9 + 1;
+    } while (!makeMove(block));
 
     centerText(MAGENTA "Computer chose a move." RESET);
 
@@ -296,7 +339,8 @@ void computerMove()
     Beep(650, 150);
     Sleep(800);
 #else
-    printf("\a"); fflush(stdout);
+    printf("\a");
+    fflush(stdout);
     sleep(1);
 #endif
 }
@@ -335,18 +379,24 @@ int main()
         centerText(CYAN "     1. Player vs Player\n" RESET);
         centerText(CYAN "     2. Player vs Computer" RESET);
 
-        while (1) {
+        while (1)
+        {
             int ok = prompt_int_or_quit(
                 YELLOW "\nEnter your choice (1 or 2) or 'Q' to quit: " RESET,
-                &mode, 1, 2
-            );
-            if (ok == 1) break;
-            if (ok == 0) { playAgain = 0; goto THE_END; }  // <<< Quit-anytime from mode menu
+                &mode, 1, 2);
+            if (ok == 1)
+                break;
+            if (ok == 0)
+            {
+                playAgain = 0;
+                goto THE_END;
+            } // <<< Quit-anytime from mode menu
             centerText(RED "Invalid input! Please enter 1, 2, or Q." RESET);
 #ifdef _WIN32
             Beep(500, 150);
 #else
-            printf("\a"); fflush(stdout);
+            printf("\a");
+            fflush(stdout);
 #endif
         }
 
@@ -366,16 +416,19 @@ int main()
             else
             {
                 int block;
-                int status = prompt_int_or_quit(
-                    CYAN "Player X, enter block (1-9) or 'Q' to quit: " RESET,
-                    &block, 1, 9
-                );
+                char prompt[100];
+                sprintf(prompt, CYAN "Player %c, enter block (1-9) or 'Q' to quit: " RESET, currentPlayer);
 
-                if (status == 0) { // quit mid-game (player typed Q/q)
+                int status = prompt_int_or_quit(prompt, &block, 1, 9);
+
+                if (status == 0)
+                { // quit mid-game (player typed Q/q)
                     centerText(RED "You quit the game. Goodbye!" RESET);
                     playAgain = 0;
-                    goto THE_END;   // <<< Centralized graceful exit
-                } else if (status == -1) {
+                    goto THE_END; // <<< Centralized graceful exit
+                }
+                else if (status == -1)
+                {
                     centerText(RED "Invalid input! Press ENTER to continue..." RESET);
                     getchar();
                     continue;
@@ -400,7 +453,8 @@ int main()
 
                 if (mode == 2 && currentPlayer == 'O')
                     centerText(RED "**************** COMPUTER WINS! ****************" RESET);
-                else {
+                else
+                {
                     char msg[96];
                     sprintf(msg, GREEN "************ PLAYER %c WINS! ************" RESET, currentPlayer);
                     centerText(msg);
@@ -422,14 +476,22 @@ int main()
         }
 
         // Ask if player wants to play again
-        while (1) {
+        while (1)
+        {
             int againVal;
             int ok = prompt_int_or_quit(
                 RED "\nPlay again? (1 = Yes / 0 = No) : " RESET,
-                &againVal, 0, 1
-            );
-            if (ok == 0) { playAgain = 0; break; }   // <<< 'Q' here exits like "No"
-            if (ok == 1) { playAgain = againVal; break; }
+                &againVal, 0, 1);
+            if (ok == 0)
+            {
+                playAgain = 0;
+                break;
+            } // <<< 'Q' here exits like "No"
+            if (ok == 1)
+            {
+                playAgain = againVal;
+                break;
+            }
             centerText(RED "Invalid input! Enter 1 or 0." RESET);
         }
     }
